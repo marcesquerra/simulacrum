@@ -1,7 +1,5 @@
-import sbtrelease._
 import com.typesafe.tools.mima.core._
 import sbtcrossproject.{crossProject, CrossType}
-import ReleaseTransformations._
 
 val Scala211 = "2.11.12"
 
@@ -33,7 +31,7 @@ lazy val commonSettings = Seq(
   scalacOptions in (Compile, console) ~= { _ filterNot { o => o == "-Ywarn-unused-import" || o == "-Xfatal-warnings" } },
   scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value,
   scalaVersion := Scala211,
-  crossScalaVersions := Seq(Scala211, "2.12.10", "2.13.0"),
+  crossScalaVersions := Seq(Scala211, "2.12.10", "2.13.1"),
   resolvers ++= Seq(
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots")
@@ -50,63 +48,19 @@ lazy val commonSettings = Seq(
         Nil
     }
   },
-  licenses += ("Three-clause BSD-style", url("https://github.com/mpilquist/simulacrum/blob/master/LICENSE")),
-  publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (version.value.trim.endsWith("SNAPSHOT"))
-      Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-      Some("releases" at nexus + "service/local/staging/deploy/maven2")
-  },
+  licenses += ("BSD 3-Clause", url("https://github.com/mpilquist/simulacrum/blob/master/LICENSE")),
   publishMavenStyle := true,
-  publishArtifact in Test := false,
-  pomIncludeRepository := { x => false },
-  pomExtra := (
-    <url>http://github.com/mpilquist/simulacrum</url>
-    <scm>
-      <url>git@github.com:mpilquist/simulacrum.git</url>
-      <connection>scm:git:git@github.com:mpilquist/simulacrum.git</connection>
-    </scm>
-    <developers>
-      <developer>
-        <id>mpilquist</id>
-        <name>Michael Pilquist</name>
-        <url>http://github.com/mpilquist</url>
-      </developer>
-    </developers>
-  ),
-  pomPostProcess := { (node) =>
-    import scala.xml._
-    import scala.xml.transform._
-    def stripIf(f: Node => Boolean) = new RewriteRule {
-      override def transform(n: Node) =
-        if (f(n)) NodeSeq.Empty else n
-    }
-    val stripTestScope = stripIf { n => n.label == "dependency" && (n \ "scope").text == "test" }
-    new RuleTransformer(stripTestScope).transform(node)(0)
-  },
-  releaseCrossBuild := true,
-  releaseProcess := Seq[ReleaseStep](
-    checkSnapshotDependencies,
-    inquireVersions,
-    runClean,
-    runTest,
-    releaseStepCommandAndRemaining("test:doc"),
-    setReleaseVersion,
-    commitReleaseVersion,
-    tagRelease,
-    publishArtifacts,
-    releaseStepCommandAndRemaining(s";++${Scala211}!;coreNative/publish"),
-    setNextVersion,
-    commitNextVersion,
-    pushChanges
-  ),
+  bintrayRepository := "jude",
+  bintrayOrganization := Some("bryghts"),
+  git.useGitDescribe := true,
+  git.formattedShaVersion := git.gitHeadCommit.value map { sha => s"v${sha.take(5).toUpperCase}" },
   wartremoverErrors in (Test, compile) ++= Seq(
     Wart.ExplicitImplicitTypes,
     Wart.ImplicitConversion)
 )
 
 lazy val root = project.in(file("."))
+  .enablePlugins(GitVersioning)
   .settings(commonSettings: _*)
   .settings(noPublishSettings: _*)
   .aggregate(coreJVM, examplesJVM, coreJS, examplesJS)
@@ -125,6 +79,7 @@ def previousVersion(scalaVersion: String, currentVersion: String): Option[String
 }
 
 lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossType(CrossType.Pure)
+  .enablePlugins(GitVersioning)
   .settings(commonSettings: _*)
   .settings(
     moduleName := "simulacrum",
@@ -154,6 +109,7 @@ lazy val coreJS = core.js
 lazy val coreNative = core.native
 
 lazy val examples = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossType(CrossType.Pure)
+  .enablePlugins(GitVersioning)
   .dependsOn(core % "provided")
   .settings(commonSettings: _*)
   .settings(moduleName := "simulacrum-examples")

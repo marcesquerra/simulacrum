@@ -1,6 +1,10 @@
 simulacrum
 ==========
 
+
+
+[ ![Download](https://api.bintray.com/packages/bryghts/jude/simulacrum/images/download.svg) ](https://bintray.com/bryghts/jude/simulacrum/_latestVersion)
+
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mpilquist/simulacrum?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Type classes rock. Alas, their encoding in Scala requires a lot of boilerplate, which doesn't rock. There is inconsistency between projects, where type classes are encoded differently. There is inconsistency within projects, where object-oriented forwarders (aka. ops, syntax) accidentally differ in exact parameter lists or forwarders are missing where they are expected to be. Even in disciplined teams, the bike-shedding opportunities alone are a source of lost productivity.
